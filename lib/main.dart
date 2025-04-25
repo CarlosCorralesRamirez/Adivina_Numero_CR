@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 void main() {
   runApp(const MyApp());
@@ -14,9 +15,9 @@ class MyApp extends StatelessWidget {
       title: 'Aplicacion de Adivina el numero',
       theme: ThemeData(
         
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
       ),
-      home: const MyHomePage(titleDif: 'Adivina el numero', min: 0, max: 0, intents: 0,),
+      home: const MyHomePage(titleDif: 'Adivina el numero'),
     );
   }
 }
@@ -75,7 +76,7 @@ class DifExtremo extends Dificultad{
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.titleDif, required this.min, required this.max, required this.intents});
+  const MyHomePage({super.key, required this.titleDif});
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -87,28 +88,45 @@ class MyHomePage extends StatefulWidget {
   // always marked "final".
 
   final String titleDif;
-  final int min;
-  final int max;
-  final int intents;
+
+  //final List<String> historial = [];
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-/*class CambiaTexto extends StatefulWidget {
-  @override
-  State<CambiaTexto> createState() => _MyHomePageState();
-}*/
-
 class _MyHomePageState extends State<MyHomePage> {
   int selectDif = 0;
-  String nombredificultad = 'Ninguna';
-  int numerominimo = 0;
-  int numeromaximo = 0;
-  int intentosposibles = 0;
+  String nombredificultad = DifFacil().nombreDif;
+  int numerominimo = DifFacil().numMin;
+  int numeromaximo = DifFacil().numMax;
+  int intentosposibles = DifFacil().intentos;
 
   int intentoshechos = 0;
+
   int numeroescondido = 0;
+
+  int numerousuario = 0;
+
+  String resultadoinput = "Ingrese un numero";
+
+  late TextEditingController textController;
+  String textoInput = '';
+  List<String> menorhistorial = [];
+  List<String> mayorhistorial = [];
+  List<String> historial = [];
+
+  @override
+  void initState(){
+    super.initState();
+    textController = TextEditingController();
+  }
+
+    @override
+  void dispose(){
+    textController.dispose();
+    super.dispose();
+  }
 
   void _incrementCounter() {
     setState(() {
@@ -140,64 +158,285 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void HacerIntento(){
+  void generarNumeroEscondido(){
+    setState(() {
+      Random numAdivina = Random();
+      numeroescondido = numerominimo + numAdivina.nextInt(numeromaximo - numerominimo + 1);
+    });
+  }
+
+  void hacerIntento(String input){
+    int numAux = int.tryParse(input)??0;
+    String resultado = "";
+
+    if(intentosposibles > 0){
+      if(numAux != 0){
+        setState(() {
+            numerousuario = numAux;
+          });
+
+        if(numerousuario > numeroescondido){
+          resultado = "El numero es mayor al numero escondido";
+          setState(() {
+            mayorhistorial.add(numerousuario.toString());
+          });
+
+        }else if(numerousuario < numeroescondido){
+          resultado = "El numero es menor al numero escondido";
+          setState(() {
+            menorhistorial.add(numerousuario.toString());
+          });
+
+        }else{
+          resultado = "El numero es igual al numero escondido FELICIDADES";
+          setState(() {
+            historial.add(numerousuario.toString());
+          });
+          //historial.add(numAux.toString());
+        }
+
+        setState(() {
+          intentosposibles--;
+          intentoshechos++;
+        });
+
+      }else{
+        resultado = "Debe ingresar un numero valido";
+      }
+    }else{
+      resultado = "No quedan intentos";
+
+      /*setState(() {
+        historial.add(numerousuario.toString());
+      });*/
+    }
+
+    setState(() {
+      numerousuario = numAux;
+      resultadoinput = resultado;
+    });
     
+  }
+
+  /*void registraInput(String input){
+    //int numAux = int.parse(input);
+    //int numAux = int.tryParse(input)??0;
+    /*if(numAux != null){
+      setState(() {
+        numerousuario = int.parse(input);
+      });
+    }*/
+    setState(() {
+      numerousuario = int.tryParse(input)??0;
+    });
+  }*/
+
+  List<Widget> menorHistorial(){
+    return new List<Widget>.generate(menorhistorial.length, (int index) {
+      return Text(menorhistorial[index].toString());
+    });
+  }
+
+  List<Widget> mayorHistorial(){
+    return new List<Widget>.generate(mayorhistorial.length, (int index) {
+      return Text(mayorhistorial[index].toString());
+    });
+  }
+
+  List<Widget> agregaHistorial(){
+    return new List<Widget>.generate(historial.length, (int index) {
+      return Text(historial[index].toString());
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      backgroundColor: Colors.grey,
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
+        //backgroundColor: Colors.grey,
         title: Text(widget.titleDif),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(nombredificultad),
-            Text(numerominimo.toString()),
-            Text(numeromaximo.toString()),
-            Text(intentosposibles.toString()),
-            Text(
+            /*Text(
               '$selectDif',
               style: 
               Theme.of(context).textTheme.headlineMedium,
+            ),*/
+            TextField(
+              controller: textController,
+              keyboardType: TextInputType.number,
+              onSubmitted: (String value){
+                hacerIntento(value);
+              },
+            ),
+            
+            Text("$nombredificultad ${selectDif.toString()}"),
+            Text("Numero minimo ${numerominimo.toString()}"),
+            Text("Numero maximo ${numeromaximo.toString()}"),
+            Text("Intentos posibles ${intentosposibles.toString()}"),
+            Text("Intentos Hechos ${intentoshechos.toString()}"),
+            Text("Numero a encontrar ${numeroescondido.toString()}"),
+            Text("Numero del usuario ${numerousuario.toString()}"),
+            Text(resultadoinput),
+            Container(
+              child: Row(
+                children: <Widget>[
+                  Column(
+                    children: [
+                      mayorhistorial.isEmpty
+                      ?const Center(
+                        child: Text('Juega para ver tu historial'),
+                      )
+                      : Column(
+                        children: mayorHistorial(),
+                      )
+                    ],
+                  ),
+
+                  Column(
+                    children: [
+                      menorhistorial.isEmpty
+                      ?const Center(
+                        child: Text('Juega para ver tu historial'),
+                      )
+                      : Column(
+                        children: menorHistorial(),
+                      )
+                    ],
+                  ),
+
+                  Column(
+                    children: [
+                      historial.isEmpty
+                      ?const Center(
+                        child: Text('Juega para ver tu historial'),
+                      )
+                      : Column(
+                        children: agregaHistorial(),
+                      )
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            /*Container(
+              child: Column(
+                children: [
+                  historial.isEmpty
+                  ?const Center(
+                    child: Text('Juega para ver tu historial'),
+                  )
+                  : Column(
+                    children: agregaHistorial(),
+                  )
+                ],
+              ),
+            ),*/
+            /*Column(
+              children: agregaHistorial(),
+            ),*/
+
+            /*Container(
+              child: Column(
+                children: [
+                  historial.isEmpty
+                  ?const Center(
+                    child: Text('Juega para ver tu historial'),
+                  )
+                  :ListView.builder(
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return Text('hola mundo 1');
+                    }
+                  ),
+                  
+                  /*Expanded(
+                    child: ListView.builder(
+                      itemCount: historial.length,
+                      scrollDirection: Axis.vertical,
+                      itemBuilder: (context, index) {
+                        return Text(historial[index]);
+                      }
+                      ),
+                    ),*/
+                  
+                ],
+              ),
+              /*child: ListView.builder(
+                itemCount: 5,
+                itemBuilder: (context, index) {
+                  return Text('hola mundo 1');
+                }
+              ),*/
+            ),*/
+            
+            /*ListView.builder(
+              itemCount: historial.length,
+              itemBuilder: (context, index) {
+                return Card(
+                  child: Row(
+                    children: [
+                      Text('$historial[index]')
+                    ],
+                  ),
+                );
+              }
+              ),*/
+            //Text('${historial[index]}'),
+
+            /*Container(
+              child: ListView.separated(
+                scrollDirection: Axis.vertical,
+                itemBuilder: (context, index){
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        child: Text(historial[index]),
+                      ),
+                    ],
+                  );
+                }, 
+                separatorBuilder: (context, index){
+                  return SizedBox(width: 20);
+                }, 
+                itemCount: 3)
+            ),*/
+            /*ListView.builder(
+              itemCount: historial.length,
+              itemBuilder: (context, index) {
+                return ListTile(
+                    title: Text(historial[index]),
+                  );
+              }
+            ),*/
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                FloatingActionButton(
+                  onPressed: _incrementCounter,
+                  tooltip: 'Incrementado',
+                  child: const Icon(Icons.add),
+                ),
+                FloatingActionButton(
+                  onPressed: generarNumeroEscondido,
+                  tooltip: 'Generando numero random',
+                  child: const Icon(Icons.charging_station),
+                ),
+                /*FloatingActionButton(
+                  onPressed: hacerIntento,
+                  tooltip: 'Intento Realizado',
+                  child: const Icon(Icons.check),
+                ),*/
+              ],
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Incrementado',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
