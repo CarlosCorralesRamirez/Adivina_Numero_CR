@@ -231,28 +231,33 @@ class _MyHomePageState extends State<MyHomePage> {
           resultado = "Debe ingresar un numero valido";
         }
       } else if (intentosposibles > 0) {
-        if (numerousuario == numeroescondido) {
+        if (numAux != 0) {
           setState(() {
-            resultadoColor = Colors.green;
-            historial.add(numerousuario.toString());
-
-            intentosposibles--;
-            intentoshechos++;
-
-            agregaResultados();
-            reiniciarJuego();
+            numerousuario = numAux;
           });
-        } else {
-          setState(() {
-            resultadoColor = Colors.red;
-            historial.add(numerousuario.toString());
+          if (numerousuario == numeroescondido) {
+            setState(() {
+              resultadoColor = Colors.green;
+              historial.add(numerousuario.toString());
 
-            intentosposibles--;
-            intentoshechos++;
+              intentosposibles--;
+              intentoshechos++;
 
-            agregaResultados();
-            reiniciarJuego();
-          });
+              agregaResultados();
+              reiniciarJuego();
+            });
+          } else {
+            setState(() {
+              resultadoColor = Colors.red;
+              historial.add(numerousuario.toString());
+
+              intentosposibles--;
+              intentoshechos++;
+
+              agregaResultados();
+              reiniciarJuego();
+            });
+          }
         }
 
         /*setState(() {
