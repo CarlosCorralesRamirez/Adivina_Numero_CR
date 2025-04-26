@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'dart:math';
 
@@ -14,7 +16,6 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Aplicacion de Adivina el numero',
       theme: ThemeData(
-        
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.grey),
       ),
       home: const MyHomePage(titleDif: 'Adivina el numero'),
@@ -31,8 +32,8 @@ class Dificultad {
   int intentos = 1;
 }
 
-class DifFacil extends Dificultad{
-  DifFacil () : super("Facil");
+class DifFacil extends Dificultad {
+  DifFacil() : super("Facil");
 
   @override
   int get numMin => 1;
@@ -42,8 +43,8 @@ class DifFacil extends Dificultad{
   int get intentos => 5;
 }
 
-class DifMedio extends Dificultad{
-  DifMedio () : super("Medio");
+class DifMedio extends Dificultad {
+  DifMedio() : super("Medio");
 
   @override
   int get numMin => 1;
@@ -53,8 +54,8 @@ class DifMedio extends Dificultad{
   int get intentos => 8;
 }
 
-class DifAvanzdo extends Dificultad{
-  DifAvanzdo () : super("Avanzado");
+class DifAvanzdo extends Dificultad {
+  DifAvanzdo() : super("Avanzado");
 
   @override
   int get numMin => 1;
@@ -64,8 +65,8 @@ class DifAvanzdo extends Dificultad{
   int get intentos => 15;
 }
 
-class DifExtremo extends Dificultad{
-  DifExtremo () : super("Extremo");
+class DifExtremo extends Dificultad {
+  DifExtremo() : super("Extremo");
 
   @override
   int get numMin => 1;
@@ -96,7 +97,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int selectDif = 0;
+  int selectDif = 1;
   String nombredificultad = DifFacil().nombreDif;
   int numerominimo = DifFacil().numMin;
   int numeromaximo = DifFacil().numMax;
@@ -108,7 +109,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
   int numerousuario = 0;
 
-  String resultadoinput = "Ingrese un numero";
+  String resultadoinput = "Ingrese un numero valido";
+
+  String textHint = "Numbers";
+  String textLabel = "Numbers";
+  Color hintColor = Colors.grey;
+  Color labelColor = Colors.grey;
+  Color resultadoColor = Colors.red;
 
   late TextEditingController textController;
   String textoInput = '';
@@ -116,180 +123,384 @@ class _MyHomePageState extends State<MyHomePage> {
   List<String> mayorhistorial = [];
   List<String> historial = [];
 
+  double sliderValue = 1;
+
+  String advertencia = "";
+
+  List<Widget> numerosHistorial = [];
+
   @override
-  void initState(){
+  void initState() {
     super.initState();
     textController = TextEditingController();
+    generarNumeroEscondido();
   }
 
-    @override
-  void dispose(){
+  @override
+  void dispose() {
     textController.dispose();
     super.dispose();
   }
 
-  void _incrementCounter() {
+  void seleccionarDificultad(double valorslider) {
     setState(() {
-      selectDif++;
-      if(selectDif == 1){
+      sliderValue = valorslider;
+      selectDif = valorslider.toInt();
+      if (selectDif == 1) {
         nombredificultad = DifFacil().nombreDif;
         numerominimo = DifFacil().numMin;
         numeromaximo = DifFacil().numMax;
         intentosposibles = DifFacil().intentos;
       }
-      if(selectDif == 2){
+      if (selectDif == 2) {
         nombredificultad = DifMedio().nombreDif;
         numerominimo = DifMedio().numMin;
         numeromaximo = DifMedio().numMax;
         intentosposibles = DifMedio().intentos;
       }
-      if(selectDif == 3){
+      if (selectDif == 3) {
         nombredificultad = DifAvanzdo().nombreDif;
         numerominimo = DifAvanzdo().numMin;
         numeromaximo = DifAvanzdo().numMax;
         intentosposibles = DifAvanzdo().intentos;
       }
-      if(selectDif == 4){
+      if (selectDif == 4) {
         nombredificultad = DifExtremo().nombreDif;
         numerominimo = DifExtremo().numMin;
         numeromaximo = DifExtremo().numMax;
         intentosposibles = DifExtremo().intentos;
       }
     });
+
+    generarNumeroEscondido();
+    limpiarTodo();
   }
 
-  void generarNumeroEscondido(){
+  void generarNumeroEscondido() {
     setState(() {
       Random numAdivina = Random();
-      numeroescondido = numerominimo + numAdivina.nextInt(numeromaximo - numerominimo + 1);
+      numeroescondido =
+          numerominimo + numAdivina.nextInt(numeromaximo - numerominimo + 1);
     });
   }
 
-  void hacerIntento(String input){
-    int numAux = int.tryParse(input)??0;
+  void hacerIntento(String input) {
+    int numAux = int.tryParse(input) ?? 0;
     String resultado = "";
 
-    if(intentosposibles > 0){
-      if(numAux != 0){
-        setState(() {
+    if (numAux > numeromaximo || numAux < numerominimo) {
+      setState(() {
+        advertencia =
+            "Debe ingresar un numero entre $numerominimo y $numeromaximo";
+      });
+    } else {
+      setState(() {
+        advertencia = "";
+      });
+
+      if (intentosposibles > 1) {
+        if (numAux != 0) {
+          setState(() {
             numerousuario = numAux;
+            intentosposibles--;
+            intentoshechos++;
           });
 
-        if(numerousuario > numeroescondido){
-          resultado = "El numero es mayor al numero escondido";
+          if (numerousuario > numeroescondido) {
+            resultado = "El numero es mayor al numero escondido";
+            setState(() {
+              mayorhistorial.add(numerousuario.toString());
+            });
+          } else if (numerousuario < numeroescondido) {
+            resultado = "El numero es menor al numero escondido";
+            setState(() {
+              menorhistorial.add(numerousuario.toString());
+            });
+          } else {
+            resultado = "El numero es igual al numero escondido FELICIDADES";
+            setState(() {
+              resultadoColor = Colors.green;
+              historial.add(numerousuario.toString());
+            });
+            agregaResultados();
+            reiniciarJuego();
+            //limpiarTodo();
+            //historial.add(numAux.toString());
+          }
+        } else {
+          resultado = "Debe ingresar un numero valido";
+        }
+      } else if (intentosposibles > 0) {
+        if (numerousuario == numeroescondido) {
           setState(() {
-            mayorhistorial.add(numerousuario.toString());
-          });
-
-        }else if(numerousuario < numeroescondido){
-          resultado = "El numero es menor al numero escondido";
-          setState(() {
-            menorhistorial.add(numerousuario.toString());
-          });
-
-        }else{
-          resultado = "El numero es igual al numero escondido FELICIDADES";
-          setState(() {
+            resultadoColor = Colors.green;
             historial.add(numerousuario.toString());
+
+            intentosposibles--;
+            intentoshechos++;
+
+            agregaResultados();
+            reiniciarJuego();
           });
-          //historial.add(numAux.toString());
+        } else {
+          setState(() {
+            resultadoColor = Colors.red;
+            historial.add(numerousuario.toString());
+
+            intentosposibles--;
+            intentoshechos++;
+
+            agregaResultados();
+            reiniciarJuego();
+          });
         }
 
-        setState(() {
-          intentosposibles--;
-          intentoshechos++;
-        });
-
-      }else{
-        resultado = "Debe ingresar un numero valido";
+        /*setState(() {
+          historial.add(numerousuario.toString());
+        });*/
+      } else {
+        resultado = "No quedan intentos";
       }
-    }else{
-      resultado = "No quedan intentos";
-
-      /*setState(() {
-        historial.add(numerousuario.toString());
-      });*/
     }
+
+    FocusManager.instance.primaryFocus?.unfocus();
 
     setState(() {
       numerousuario = numAux;
       resultadoinput = resultado;
+      textHint = "Numbers";
+      hintColor = Colors.grey;
+      textLabel = "Numbers";
+      labelColor = Colors.grey;
     });
-    
+
+    textController.clear();
   }
 
-  /*void registraInput(String input){
-    //int numAux = int.parse(input);
-    //int numAux = int.tryParse(input)??0;
-    /*if(numAux != null){
-      setState(() {
-        numerousuario = int.parse(input);
-      });
-    }*/
+  void fieldSeleccionado() {
     setState(() {
-      numerousuario = int.tryParse(input)??0;
+      textHint = "###";
+      //hintColor = Colors.white;
+      textLabel = "Numbers";
+      labelColor = Colors.blue;
     });
-  }*/
+  }
 
-  List<Widget> menorHistorial(){
+  void fieldDeseleccionado(PointerDownEvent e) {
+    FocusManager.instance.primaryFocus?.unfocus();
+    setState(() {
+      textHint = "Numbers";
+      hintColor = Colors.grey;
+      textLabel = "Numbers";
+      labelColor = Colors.grey;
+    });
+  }
+
+  void limpiarTodo() {
+    textController.clear();
+    menorhistorial.clear();
+    mayorhistorial.clear();
+    intentoshechos = 0;
+    advertencia = "";
+  }
+
+  void reiniciarJuego() {
+    seleccionarDificultad(sliderValue);
+  }
+
+  List<Widget> menorHistorial() {
     return new List<Widget>.generate(menorhistorial.length, (int index) {
-      return Text(menorhistorial[index].toString());
+      return Text(
+        menorhistorial[index].toString(),
+        style: TextStyle(color: Colors.white),
+      );
     });
   }
 
-  List<Widget> mayorHistorial(){
+  List<Widget> mayorHistorial() {
     return new List<Widget>.generate(mayorhistorial.length, (int index) {
-      return Text(mayorhistorial[index].toString());
+      return Text(
+        mayorhistorial[index].toString(),
+        style: TextStyle(color: Colors.white),
+      );
     });
   }
 
-  List<Widget> agregaHistorial(){
+  List<Widget> agregaHistorial() {
     return new List<Widget>.generate(historial.length, (int index) {
-      return Text(historial[index].toString());
+      return Text(
+        historial[index].toString(),
+        style: TextStyle(color: resultadoColor),
+      );
+    });
+  }
+
+  void agregaResultados() {
+    setState(() {
+      numerosHistorial.add(
+        Text(numerousuario.toString(), style: TextStyle(color: resultadoColor)),
+      );
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    //generarNumeroEscondido();
     return Scaffold(
-      backgroundColor: Colors.grey,
+      backgroundColor: Colors.grey[850],
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        //backgroundColor: Colors.grey,
-        title: Text(widget.titleDif),
+        centerTitle: true,
+        backgroundColor: Colors.grey[800],
+        title: Text(widget.titleDif, style: TextStyle(color: Colors.white)),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.menu, color: Colors.white),
+            onPressed: () {
+              //Boton presionado
+            },
+          ),
+        ],
       ),
       body: Center(
+        //Columna principal
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: <Widget>[
-            /*Text(
-              '$selectDif',
-              style: 
-              Theme.of(context).textTheme.headlineMedium,
-            ),*/
-            TextField(
-              controller: textController,
-              keyboardType: TextInputType.number,
-              onSubmitted: (String value){
-                hacerIntento(value);
-              },
+            //Fila de TextField
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                SizedBox(
+                  width: 200.0,
+                  child: TextField(
+                    controller: textController,
+                    onTap: fieldSeleccionado,
+                    onTapOutside: fieldDeseleccionado,
+                    keyboardType: TextInputType.number,
+                    style: TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.white),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: Colors.blue),
+                      ),
+                      hintText: textHint,
+                      hintStyle: TextStyle(color: hintColor),
+                      labelText: textLabel,
+                      labelStyle: TextStyle(color: labelColor),
+                    ),
+                    onSubmitted: (String value) {
+                      hacerIntento(value);
+                    },
+                  ),
+                ),
+                Column(
+                  children: <Widget>[
+                    Text("Intentos", style: TextStyle(color: Colors.white)),
+                    Text(
+                      intentosposibles.toString(),
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            
-            Text("$nombredificultad ${selectDif.toString()}"),
-            Text("Numero minimo ${numerominimo.toString()}"),
-            Text("Numero maximo ${numeromaximo.toString()}"),
-            Text("Intentos posibles ${intentosposibles.toString()}"),
-            Text("Intentos Hechos ${intentoshechos.toString()}"),
-            Text("Numero a encontrar ${numeroescondido.toString()}"),
-            Text("Numero del usuario ${numerousuario.toString()}"),
-            Text(resultadoinput),
-            Container(
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: <Widget>[
+                //Box de historial mayor
+                SizedBox(
+                  width: 100.0,
+                  height: 200,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 1.0),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            "Mayor que",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Column(children: mayorHistorial()),
+                        ],
+                      ),
+                    ),
+                  ),
+                  //child:
+                ),
+
+                //Box de historial menor
+                SizedBox(
+                  width: 100.0,
+                  height: 200,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 1.0),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            "Menor que",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Column(children: menorHistorial()),
+                        ],
+                      ),
+                    ),
+                  ),
+                  //child:
+                ),
+
+                //Box de historial
+                SizedBox(
+                  width: 100.0,
+                  height: 200,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white, width: 1.0),
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: <Widget>[
+                          Text(
+                            "Historial",
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          Column(children: numerosHistorial),
+                        ],
+                      ),
+                    ),
+                  ),
+                  //child:
+                ),
+              ],
+            ),
+            Text(nombredificultad, style: TextStyle(color: Colors.white)),
+
+            //Text("Numero minimo ${numerominimo.toString()}", style: TextStyle(color: Colors.white),),
+            //Text("Numero maximo ${numeromaximo.toString()}", style: TextStyle(color: Colors.white),),
+
+            //Text("Intentos Hechos ${intentoshechos.toString()}", style: TextStyle(color: Colors.white),),
+            //Text("Numero a encontrar ${numeroescondido.toString()}",style: TextStyle(color: Colors.white),),
+            //Text("Numero del usuario ${numerousuario.toString()}",style: TextStyle(color: Colors.white),),
+            //Text(resultadoinput, style: TextStyle(color: Colors.white),),
+            /*Container(
               child: Row(
                 children: <Widget>[
                   Column(
                     children: [
                       mayorhistorial.isEmpty
                       ?const Center(
-                        child: Text('Juega para ver tu historial'),
+                        child: Text('mayor historial', style: TextStyle(color: Colors.white),),
                       )
                       : Column(
                         children: mayorHistorial(),
@@ -301,7 +512,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: [
                       menorhistorial.isEmpty
                       ?const Center(
-                        child: Text('Juega para ver tu historial'),
+                        child: Text('menor historial', style: TextStyle(color: Colors.white),),
                       )
                       : Column(
                         children: menorHistorial(),
@@ -313,7 +524,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     children: [
                       historial.isEmpty
                       ?const Center(
-                        child: Text('Juega para ver tu historial'),
+                        child: Text('historial', style: TextStyle(color: Colors.white),),
                       )
                       : Column(
                         children: agregaHistorial(),
@@ -322,99 +533,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
+            ),*/
+            Slider(
+              value: sliderValue,
+              min: 1,
+              max: 4,
+              divisions: 3,
+              label: nombredificultad,
+              activeColor: Colors.blue,
+              onChanged: (double slider) {
+                seleccionarDificultad(slider);
+              },
             ),
-            /*Container(
-              child: Column(
-                children: [
-                  historial.isEmpty
-                  ?const Center(
-                    child: Text('Juega para ver tu historial'),
-                  )
-                  : Column(
-                    children: agregaHistorial(),
-                  )
-                ],
-              ),
-            ),*/
-            /*Column(
-              children: agregaHistorial(),
-            ),*/
 
-            /*Container(
-              child: Column(
-                children: [
-                  historial.isEmpty
-                  ?const Center(
-                    child: Text('Juega para ver tu historial'),
-                  )
-                  :ListView.builder(
-                    itemCount: 5,
-                    itemBuilder: (context, index) {
-                      return Text('hola mundo 1');
-                    }
-                  ),
-                  
-                  /*Expanded(
-                    child: ListView.builder(
-                      itemCount: historial.length,
-                      scrollDirection: Axis.vertical,
-                      itemBuilder: (context, index) {
-                        return Text(historial[index]);
-                      }
-                      ),
-                    ),*/
-                  
-                ],
-              ),
-              /*child: ListView.builder(
-                itemCount: 5,
-                itemBuilder: (context, index) {
-                  return Text('hola mundo 1');
-                }
-              ),*/
-            ),*/
-            
-            /*ListView.builder(
-              itemCount: historial.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  child: Row(
-                    children: [
-                      Text('$historial[index]')
-                    ],
-                  ),
-                );
-              }
-              ),*/
-            //Text('${historial[index]}'),
+            Text(advertencia, style: TextStyle(color: Colors.red)),
 
-            /*Container(
-              child: ListView.separated(
-                scrollDirection: Axis.vertical,
-                itemBuilder: (context, index){
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        child: Text(historial[index]),
-                      ),
-                    ],
-                  );
-                }, 
-                separatorBuilder: (context, index){
-                  return SizedBox(width: 20);
-                }, 
-                itemCount: 3)
-            ),*/
-            /*ListView.builder(
-              itemCount: historial.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                    title: Text(historial[index]),
-                  );
-              }
-            ),*/
-            Row(
+            SizedBox(height: 200),
+            /*Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 FloatingActionButton(
@@ -433,7 +568,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: const Icon(Icons.check),
                 ),*/
               ],
-            ),
+            ),*/
           ],
         ),
       ),
